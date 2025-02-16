@@ -7,6 +7,7 @@ import datetime
 from flask_socketio import SocketIO
 import pandas as pd
 import numpy as np  # เพิ่มการนำเข้า numpy
+import pytz
 #from pyngrok import ngrok
 
 app = Flask(__name__)
@@ -59,9 +60,9 @@ def get_next_boat(station, flag, direction):
     # โหลดข้อมูลจาก Excel
     file_path = "data/boat_schedule.xlsx"  # ไฟล์ตารางเรือ
     df = pd.read_excel(file_path)
-
+    timezone = pytz.timezone('Asia/Bangkok')
     # ตรวจสอบวันปัจจุบัน (จันทร์-ศุกร์ หรือ เสาร์-อาทิตย์)
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(timezone)
     current_time = now.strftime("%H:%M")
     weekday = now.strftime("%A")
 
