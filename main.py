@@ -6,6 +6,7 @@ import time
 import datetime
 from flask_socketio import SocketIO
 import pandas as pd
+import numpy as np  # เพิ่มการนำเข้า numpy
 #from pyngrok import ngrok
 
 app = Flask(__name__)
