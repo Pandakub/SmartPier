@@ -3,6 +3,7 @@ Werkzeug==2.0.3
 requests==2.31.0
 flask-socketio==5.3.6
 pandas==2.0.3
+numpy==1.24.0  # เพิ่ม numpy เวอร์ชันที่เข้ากันได้
 gunicorn==20.1.0
 gevent-websocket==0.10.1
 gevent==22.10.2
