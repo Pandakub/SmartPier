@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตารางเรือ N24</title>
+    
+    <!-- Google Maps API (ต้องใส่ API Key) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBOjtaT6Ym7bHDSrCXZDchnhqiM4FoRaag"></script>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        #map {
+            height: 350px;
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .boat-box {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 8px;
+            color: black;
+            font-weight: bold;
+            text-align: center;
+        }
+        .orange { background-color:rgb(243, 154, 53); }
+        .green { background-color: rgb(103, 236, 132); }
+        .yellow { background-color: gold; }
+        .lightyellow { background-color:#FFFF99; }
+        .red { background-color: rgb(241, 100, 100); }
+        .purple { background-color: rgb(184, 110, 248); }
+    </style>
+</head>
+
+<body class="container py-3">
+
+    <h2 class="text-primary">{{ schedule.station }}</h2>
+    <p class="text-muted"> เวลา: {{ current_time }}</p>
+
+    <!-- Google Map -->
+    <div id="map"></div>
+
+    <!-- ตารางเรือ -->
+    <!-- <div class="row">
+        {% for route in schedule.routes %}
+        <div class="col-md-6">
+            <h4 class="text-dark">{{ route.direction }}</h4>
+            {% for boat in route.schedule %}
+            <div class="boat-box {{ boat.color }}">
+                {{ boat.type }} <br>
+                เวลา: {{ boat.time }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div> -->
+    <div class="row">
+        {% for route in schedule.routes %}
+        <div class="col-md-6">
+            <h4>{{ route.direction }}</h4>
+            {% for boat in route.schedule %}
+            <div class="boat-box {{ boat.color }}">
+                {{ boat.type }} <br>
+                คาดว่าจะเข้าเวลา: <b>{{ boat.time }}</b>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    <!-- Google Maps & JavaScript -->
+    <script>
+        var map;
+        var markers = [];
+        var locations = {{ lat_long_list | tojson }};
+
+        function initMap() {
+            var defaultCenter = { lat: 13.736717, lng: 100.523186 }; // Bangkok, Thailand
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: defaultCenter
+            });
+
+            updateMarkers(locations);
+        }
+
+        function updateMarkers(locations) {
+            // ลบ Marker เก่า
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+
+            // เพิ่ม Marker ใหม่
+            //locations.forEach(location => {
+                //var marker = new google.maps.Marker({
+            //        position: { lat: location.lat, lng: location.lng },
+            //         map: map,
+            //         icon: {
+            //             url: "https://maps.google.com/mapfiles/kml/shapes/ferry.png",
+            //             scaledSize: new google.maps.Size(40, 40) // ปรับขนาดไอคอน
+            //         }
+            //     });
+            //     markers.push(marker);
+            // });
+            locations.forEach(location => {
+                var marker = new google.maps.Marker({
+                    position: { lat: location.lat, lng: location.lng },
+                    map: map
+                });
+                markers.push(marker);
+            });
+            if (locations.length > 0) {
+                map.setCenter({ lat: locations[0].lat, lng: locations[0].lng });
+            }
+        }
+
+        function fetchLocation() {
+            fetch('/api/location')
+                .then(response => response.json())
+                .then(data => {
+                    locations = data.locations;
+                    updateMarkers(locations);
+                })
+                .catch(error => console.error("❌ Error fetching location:", error));
+        }
+
+        window.onload = function () {
+            initMap();
+            setInterval(fetchLocation, 5000); // อัปเดตตำแหน่งทุก 5 วินาที
+        };
+    </script>
+    <!-- Boat Schedule Script -->
+    <script>
+        async function fetchBoatSchedule() {
+            try {
+                const response = await fetch('/api/get_boat_schedule');
+                const data = await response.json();
+                console.log(data);
+
+                document.querySelector("h2").innerText = data.station;
+                document.querySelector("p").innerText = `คาดว่าจะเข้าเวลา: ${data.time_now}`;
+
+                let container = document.querySelector(".row");
+                container.innerHTML = "";
+
+                data.routes.forEach(route => {
+                    let col = document.createElement("div");
+                    col.className = "col-md-6";
+                    col.innerHTML = `<h4>${route.direction}</h4>`;
+
+                    route.schedule.forEach(boat => {
+                        let div = document.createElement("div");
+                        div.className = "boat-box";
+                        div.innerHTML = `${boat.type} <br> คาดว่าจะเข้าเวลา: <b>${boat.time}</b>`;
+                        col.appendChild(div);
+                    });
+                    container.appendChild(col);
+                });
+            } catch (error) {
+                console.error("❌ Error fetching boat schedule:", error);
+            }
+        }
+
+        fetchBoatSchedule();
+        setInterval(fetchBoatSchedule, 10000);
+    </script>
+</body>
+</html>
