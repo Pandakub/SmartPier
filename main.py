@@ -56,11 +56,11 @@ def get_boat_schedule():
 
 def get_next_boat(station, flag, direction):
     """คืนค่ารอบเรือถัดไปตามเวลาปัจจุบัน"""
-    
+    timezone = pytz.timezone('Asia/Bangkok')
     # โหลดข้อมูลจาก Excel
     file_path = "data/boat_schedule.xlsx"  # ไฟล์ตารางเรือ
     df = pd.read_excel(file_path)
-    timezone = pytz.timezone('Asia/Bangkok')
+    
     # ตรวจสอบวันปัจจุบัน (จันทร์-ศุกร์ หรือ เสาร์-อาทิตย์)
     now = datetime.datetime.now(timezone)
     current_time = now.strftime("%H:%M")
