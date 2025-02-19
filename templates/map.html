@@ -26,6 +26,10 @@
             font-size: 36px; /* ปรับขนาด <h2> */
             font-weight: bold; /* ทำให้ตัวหนา */
         }
+        h4.text-primary {
+            font-size: 36px; /* ปรับขนาด <h2> */
+            font-weight: bold; /* ทำให้ตัวหนา */
+        }
         p.text-muted {
             font-size: 36px; /* ปรับขนาด <p> */
         }
@@ -73,7 +77,9 @@
     <div class="row">
         {% for route in schedule.routes %}
         <div class="col-md-6">
-            <h4>{{ route.direction }}</h4>
+            <h4 style="font-size: 30px; color: black; font-weight: bold;">
+                {{ route.direction }}
+            </h4>
             {% for boat in route.schedule %}
             <div class="boat-box {{ boat.color }}">
                 {{ boat.type }} <br>
