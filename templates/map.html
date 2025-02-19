@@ -54,7 +54,7 @@
     <p class="text-muted"> เวลา: {{ current_time }}</p>
 
     <!-- Google Map -->
-    <div id="map"></div>
+    <!--<div id="map"></div>-->
 
     <!-- ตารางเรือ -->
     <!-- <div class="row">
@@ -84,7 +84,7 @@
         {% endfor %}
     </div>
     <!-- Google Maps & JavaScript -->
-    <script>
+    <!--<script>
         var map;
         var markers = [];
         var locations = {{ lat_long_list | tojson }};
@@ -143,7 +143,7 @@
             initMap();
             setInterval(fetchLocation, 5000); // อัปเดตตำแหน่งทุก 5 วินาที
         };
-    </script>
+    </script>-->
     <!-- Boat Schedule Script -->
     <script>
         async function fetchBoatSchedule() {
