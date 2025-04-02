@@ -29,8 +29,14 @@ TIMEZONE = pytz.timezone('Asia/Bangkok')
 PORT_LAT = 13.811571
 PORT_LON = 100.514851
 
-r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
+r = redis.Redis(
+    host=os.getenv('premium-pelican-54640.upstash.io'),
+    port=int(os.getenv('6379')),
+    password=os.getenv('AdVwAAIjcDEzMjkzYmEzZjNkNTg0MDE4Yjk4NjhlN2YzODM0ZjFjYXAxMA'),
+    ssl=True,
+    decode_responses=True
+)
 STATUS_EXPIRE = 900  # 15 นาที
 
 def get_current_time():
