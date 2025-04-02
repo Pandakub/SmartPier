@@ -31,9 +31,9 @@ PORT_LON = 100.514851
 
 
 r = redis.Redis(
-    host=os.getenv('premium-pelican-54640.upstash.io'),
-    port=int(os.getenv('6379')),
-    password=os.getenv('AdVwAAIjcDEzMjkzYmEzZjNkNTg0MDE4Yjk4NjhlN2YzODM0ZjFjYXAxMA'),
+    host=os.getenv('REDIS_HOST'),
+    port=int(os.getenv('REDIS_PORT')),
+    password=os.getenv('REDIS_PASSWORD'),
     ssl=True,
     decode_responses=True
 )
