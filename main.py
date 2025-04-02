@@ -1,19 +1,21 @@
 from flask import Flask, render_template, jsonify
 import requests
+import datetime
+import pytz
+import math
+import redis
+import json
+
 import threading
 import subprocess
 import time
-import datetime
+
 from flask_socketio import SocketIO
 import pandas as pd
 import numpy as np
-import pytz
+
 
 app = Flask(__name__)
-
-# กำหนด timezone ที่จะใช้ทั่วทั้งแอพ
-TIMEZONE = pytz.timezone('Asia/Bangkok')
-
 FLAG_COLORS = {
     "ธงส้ม": "orange",
     "ธงเขียวเหลือง": "green",
@@ -23,10 +25,120 @@ FLAG_COLORS = {
     "เรือไฟฟ้า": "purple"
 }
 
+TIMEZONE = pytz.timezone('Asia/Bangkok')
+PORT_LAT = 13.811571
+PORT_LON = 100.514851
+
+r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+
+STATUS_EXPIRE = 900  # 15 นาที
+
 def get_current_time():
-    """ฟังก์ชันสำหรับดึงเวลาปัจจุบันในเขตเวลาไทย"""
     return datetime.datetime.now(TIMEZONE)
 
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    c = 2 * math.asin(math.sqrt(a))
+    return R * c * 1000
+
+def fetch_external_api(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, list) and len(data) > 0 and "data" in data[0]:
+            return data[0]["data"]
+        else:
+            print("Warning: Unexpected API response format")
+            return None
+    except requests.RequestException as e:
+        print(f"API Error: {e}")
+        return None
+
+def save_boat_memory(boat_id, data):
+    r.set(f"boat:{boat_id}", json.dumps(data), ex=STATUS_EXPIRE)
+
+def load_boat_memory(boat_id):
+    data = r.get(f"boat:{boat_id}")
+    if data:
+        return json.loads(data)
+    return None
+
+def process_boat_data(api_data):
+    if not api_data:
+        return []
+
+    display_boats = []
+    for boat_id, info in api_data.items():
+        if info.get("line") != "UrbanLine":
+            continue
+
+        distance = haversine(info["lat"], info["lon"], PORT_LAT, PORT_LON)
+        memory = load_boat_memory(boat_id)
+
+        # เรืออยู่นอกระยะ 6500 → ลบข้อมูล
+        if distance > 6500:
+            r.delete(f"boat:{boat_id}")
+            continue
+
+        if not memory:
+            if distance <= 6000:
+                # จุดแรกที่เข้า 6000 m
+                memory = {
+                    "lat": info["lat"],
+                    "lon": info["lon"],
+                    "init_distance": distance,
+                    "init_lat": info["lat"],
+                    "status": "in_range"
+                }
+                save_boat_memory(boat_id, memory)
+            continue
+
+        # ถ้าเคย mark pass แล้ว → ไม่แสดง
+        if memory.get("status") == "pass":
+            save_boat_memory(boat_id, memory)
+            continue
+
+        # ถ้าอยู่ในระยะ 6000
+        if distance <= 6000:
+            distance_diff = memory["init_distance"] - distance
+            direction = memory.get("direction")
+
+            if not direction:
+                if memory["init_lat"] > PORT_LAT and distance_diff >= 1000:
+                    direction = "ไป สาทร"
+                    memory["direction"] = direction
+                elif memory["init_lat"] < PORT_LAT and distance_diff >= 1000:
+                    direction = "ไป นนทบุรี"
+                    memory["direction"] = direction
+
+            # เช็คว่าเลยท่าแล้วหรือยัง → ถ้าเลย Mark pass
+            if direction:
+                if (direction == "ไป สาทร" and info["lat"] < PORT_LAT) or (direction == "ไป นนทบุรี" and info["lat"] > PORT_LAT):
+                    memory["status"] = "pass"
+                    save_boat_memory(boat_id, memory)
+                    continue
+
+                est_time_min = round((distance / 1000) / 20 * 60)
+                display_boats.append({
+                    "id": boat_id,
+                    "lat": info["lat"],
+                    "lon": info["lon"],
+                    "distance": round(distance, 2),
+                    "direction": direction,
+                    "est_time": est_time_min
+                })
+
+            # อัปเดตตำแหน่งล่าสุด
+            memory["lat"] = info["lat"]
+            memory["lon"] = info["lon"]
+            save_boat_memory(boat_id, memory)
+
+    return display_boats
+#ส่วนของการแสดงผล ตารางเดินเรือ
 def get_boat_schedule():
     return {
         "station": "N24 ท่าพระรามเจ็ด",
@@ -55,7 +167,6 @@ def get_boat_schedule():
             }
         ]
     }
-
 def get_next_boat(station, flag, direction):
     """คืนค่ารอบเรือถัดไปตามเวลาปัจจุบัน"""
     # โหลดข้อมูลจาก Excel
@@ -147,30 +258,25 @@ def index():
 def api_location():
     return jsonify({"locations": get_lat_long()})
 
-def fetch_external_api(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
-        print(f"❌ API Error: {e}")
-        return None
 
 @app.route('/dashboard')
-def dashboard():
-    distance = fetch_external_api("https://api.thingspeak.com/channels/2454824/fields/5.json?results=1")
-    time_data = fetch_external_api("https://api.thingspeak.com/channels/2454824/fields/4.json?results=1")
-    route = fetch_external_api("https://api.thingspeak.com/channels/2454824/fields/6.json?results=1")
+def index2():
+    api_url = "https://us-central1-smartpier-b8896.cloudfunctions.net/app/boatApi"
+    data = fetch_external_api(api_url)
+    boats = process_boat_data(data) if data else []
     current_time = get_current_time().strftime("%H:%M")
+    return render_template('dashboard2.html', boats=boats, current_time=current_time)
 
-    data = {
-        'distance': float(distance['feeds'][0].get('field5', 999)) if distance and 'feeds' in distance and len(distance['feeds']) > 0 else 999,
-        'direction': int(route['feeds'][0].get('field6', 1)) if route and 'feeds' in route and len(route['feeds']) > 0 else 1,
-        'time': time_data['feeds'][0].get('field4', '--') if time_data and 'feeds' in time_data and len(time_data['feeds']) > 0 else '--'
-    }
-
-    return render_template('dashboard2.html', data=data, current_time=current_time)
+@app.route('/api/get_boat_data')
+def get_boat_data():
+    api_url = "https://us-central1-smartpier-b8896.cloudfunctions.net/app/boatApi"
+    data = fetch_external_api(api_url)
+    boats = process_boat_data(data) if data else []
+    current_time = get_current_time().strftime("%H:%M")
+    return jsonify({
+        "current_time": current_time,
+        "boats": boats
+    })
 
 if __name__ == '__main__':
-    print("🚀 กำลังเริ่มต้น Flask application...")
     app.run(debug=True, port=5000)
