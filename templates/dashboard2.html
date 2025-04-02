@@ -8,7 +8,7 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color:rgb(255, 255, 255);
+            background-color: #fff;
             margin: 0;
             padding: 20px;
         }
@@ -16,36 +16,25 @@
             text-align: center;
             margin-bottom: 30px;
         }
-        
-        .header h1 {
-            font-size: 30px; /* เปลี่ยนขนาดตัวอักษรตามที่ต้องการ */
-            font-weight: bold; /* ทำให้ตัวอักษรหนาขึ้น (ถ้าต้องการ) */
-        }
-        
         .main-card {
             background: white;
             border-radius: 12px;
-            padding: 40px;
+            padding: 30px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-
         .station-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            font-size: 26px; /* เปลี่ยนขนาดตัวอักษรตามที่ต้องการ */
-            font-weight: bold; /* ทำให้ตัวอักษรหนาขึ้น (ถ้าต้องการ) */
+            font-size: 24px;
+            font-weight: bold;
         }
-
         .route-container {
             display: flex;
             gap: 20px;
             margin-top: 20px;
-            font-size: 20px; /* เปลี่ยนขนาดตัวอักษรตามที่ต้องการ */
-            font-weight: bold; /* ทำให้ตัวอักษรหนาขึ้น (ถ้าต้องการ) */
         }
-
         .route-card {
             flex: 1;
             border: 1px solid #eee;
@@ -53,39 +42,29 @@
             padding: 15px;
             text-align: center;
         }
-
         .route-header {
             display: flex;
             align-items: center;
             gap: 10px;
             color: #2196F3;
             margin-bottom: 10px;
+            justify-content: center;
         }
-
-        .route-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #666;
-            font-size: 18px;
-        }
-
         .price-button {
             display: flex;
             margin-top: 10px;
             overflow: hidden;
             border-radius: 8px;
         }
-
         .price-left {
-            background: #E5A43B;
+            background: #A084E8;
             color: white;
-            padding: 12px;
+            padding: 20px;
             flex: 2;
             display: flex;
+            flex-direction: column;
             align-items: center;
         }
-
         .price-right {
             background: #2196F3;
             color: white;
@@ -95,7 +74,6 @@
             align-items: center;
             justify-content: center;
         }
-
         .no-data {
             color: #666;
             text-align: center;
@@ -117,111 +95,56 @@
         </div>
 
         <div class="route-container">
-            <!-- Route นนทบุรี, ปากเกร็ด -->
+            <!-- ฝั่ง นนทบุรี -->
             <div class="route-card">
-                <div class="route-header">
+                <div class="route-header"style="font-size: 26px;">
                     <span>⬅️</span>
                     <span>นนทบุรี, ปากเกร็ด</span>
                 </div>
-                <div class="route-content">
-                    <span>Route</span>
-                    <span>Next Boat</span>
-                </div>
-                {% if data.direction == 1 and data.distance <= 5000 %}
+                {% set has_data = false %}
+                {% for boat in boats if boat.direction == 'ไป นนทบุรี' %}
+                    {% set has_data = true %}
                     <div class="price-button">
-                        <div class="price-left">
-                            ธงเหลืองกลางวัน
-                            <br>
-                            ⬅️ นนทบุรี, ปากเกร็ด
+                        <div class="price-left" style="font-size: 20px;">
+                            สาย Urban Line({{ boat.id }})<br><!-- ({{ boat.id }})-->
+                            ⬅️ นนทบุรี, ปากเกร็ด<br>
+                            
                         </div>
-                        <div class="price-right">
-                            {{ data.time }} นาที
+                        <div class="price-right" style="font-size: 20px;">
+                            {{ boat.est_time }} นาที
                         </div>
                     </div>
-                {% else %}
+                {% endfor %}
+                {% if not has_data %}
                     <div class="no-data">ไม่มีข้อมูล</div>
                 {% endif %}
             </div>
-            
-            <!-- Route สาทร, วัดราชสิงขร -->
+
+            <!-- ฝั่ง สาทร -->
             <div class="route-card">
-                <div class="route-header">
+                <div class="route-header" style="font-size: 26px;">
                     <span>➡️</span>
                     <span>สาทร, วัดราชสิงขร</span>
                 </div>
-                <div class="route-content">
-                    <span>Route</span>
-                    <span>Next Boat</span>
-                </div>
-                {% if data.direction == 2 and data.distance <= 5000 %}
+                {% set has_data = false %}
+                {% for boat in boats if boat.direction == 'ไป สาทร' %}
+                    {% set has_data = true %}
                     <div class="price-button">
-                        <div class="price-left">
-                            ธงเหลืองกลางวัน
-                            <br>
-                            ➡️ สาทร, วัดราชสิงขร
+                        <div class="price-left" style="font-size: 20px;">
+                            สาย Urban Line ({{ boat.id }})<br><!-- ({{ boat.id }})-->
+                            ➡️ สาทร, วัดราชสิงขร<br>
+                            
                         </div>
-                        <div class="price-right">
-                            {{ data.time }} นาที
+                        <div class="price-right" style="font-size: 20px;">
+                            {{ boat.est_time }} นาที
                         </div>
                     </div>
-                {% else %}
+                {% endfor %}
+                {% if not has_data %}
                     <div class="no-data">ไม่มีข้อมูล</div>
                 {% endif %}
             </div>
         </div>
     </div>
-        <!-- 🔥 เพิ่ม JavaScript สำหรับอัปเดตข้อมูลทุก 10 วินาที -->
-    <script>
-        async function fetchData() {
-            try {
-                // 📌 ดึงข้อมูลจาก API
-                let response = await fetch('/api/get_boat_data');
-                let data = await response.json();
-                console.log(data);
-
-                // 📌 อัปเดตเวลา
-                document.getElementById("current-time").innerText = `เวลา ${data.current_time} นาที`;
-
-                // 📌 อัปเดตข้อมูลเส้นทาง นนทบุรี, ปากเกร็ด
-                if (data.direction === 1 && data.distance <= 5000) {
-                    document.getElementById("route1").innerHTML = `
-                        <div class="price-button">
-                            <div class="price-left">
-                                ธงเหลืองกลางวัน
-                                <br> ⬅️ นนทบุรี, ปากเกร็ด
-                            </div>
-                            <div class="price-right">
-                                ${data.time} นาที
-                            </div>
-                        </div>`;
-                } else {
-                    document.getElementById("route1").innerHTML = `<div class="no-data">ไม่มีข้อมูล</div>`;
-                }
-
-                // 📌 อัปเดตข้อมูลเส้นทาง สาทร, วัดราชสิงขร
-                if (data.direction === 2 && data.distance <= 5000) {
-                    document.getElementById("route2").innerHTML = `
-                        <div class="price-button">
-                            <div class="price-left">
-                                ธงเหลืองกลางวัน
-                                <br> ➡️ สาทร, วัดราชสิงขร
-                            </div>
-                            <div class="price-right">
-                                ${data.time} นาที
-                            </div>
-                        </div>`;
-                } else {
-                    document.getElementById("route2").innerHTML = `<div class="no-data">ไม่มีข้อมูล</div>`;
-                }
-
-            } catch (error) {
-                console.error("❌ Error fetching data:", error);
-            }
-        }
-
-        // 📌 ดึงข้อมูลครั้งแรก และอัปเดตทุก 10 วินาที
-        fetchData();
-        setInterval(fetchData, 10000);
-    </script>
 </body>
 </html>
