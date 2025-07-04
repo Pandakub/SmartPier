@@ -73,6 +73,18 @@ def load_boat_memory(boat_id):
         return json.loads(data)
     return None
 
+def send_to_google_sheet(data):
+    GAS_URL = "https://script.google.com/macros/s/AKfycbzg0ry8-pepwLWAw6fYe3FlG8T03Ioy4pzOiittPqJuXTyQJGGN4zRDzFMot2UOH2a5Ig/exec"  # เปลี่ยนเป็นของคุณเอง
+    try:
+        response = requests.post(GAS_URL, json=data)
+        if response.status_code == 200:
+            print("✅ ส่งข้อมูลไปยัง Google Sheet แล้ว")
+        else:
+            print(f"⚠️ การส่งข้อมูลล้มเหลว: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Error sending to Google Sheet: {e}")
+
+
 def process_boat_data(api_data):
     if not api_data:
         return []
@@ -124,6 +136,13 @@ def process_boat_data(api_data):
             # เช็คว่าเลยท่าแล้วหรือยัง → ถ้าเลย Mark pass
             if direction:
                 if (direction == "ไป สาทร" and info["lat"] < PORT_LAT) or (direction == "ไป นนทบุรี" and info["lat"] > PORT_LAT):
+                    
+                    send_to_google_sheet({
+                        "id": boat_id,
+                        "line": info.get("line", ""),
+                        "arrived_time": get_current_time().strftime("%Y-%m-%d %H:%M:%S"),
+                        "route": direction
+                    })
                     memory["status"] = "pass"
                     save_boat_memory(boat_id, memory)
                     continue
