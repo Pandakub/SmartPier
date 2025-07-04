@@ -91,8 +91,6 @@ def process_boat_data(api_data):
 
     display_boats = []
     for boat_id, info in api_data.items():
-        if info.get("line") != "UrbanLine":
-            continue
 
         distance = haversine(info["lat"], info["lon"], PORT_LAT, PORT_LON)
         memory = load_boat_memory(boat_id)
