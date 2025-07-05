@@ -74,7 +74,7 @@ def load_boat_memory(boat_id):
     return None
 
 def send_to_google_sheet(data):
-    GAS_URL = "https://script.google.com/macros/s/AKfycbzg0ry8-pepwLWAw6fYe3FlG8T03Ioy4pzOiittPqJuXTyQJGGN4zRDzFMot2UOH2a5Ig/exec"  # เปลี่ยนเป็นของคุณเอง
+    GAS_URL = "https://script.google.com/macros/s/AKfycbzOD90YbFb4anj1CqMqbr0QrAhC1aEo93DeDqArom67Dw74XbBfXwhKn5C3E0BupXgCkQ/exec"  # เปลี่ยนเป็นของคุณเอง
     try:
         response = requests.post(GAS_URL, json=data)
         if response.status_code == 200:
