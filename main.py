@@ -30,12 +30,10 @@ PORT_LAT = 13.811571
 PORT_LON = 100.514851
 
 
-r = redis.Redis(
-    host=os.getenv('REDIS_HOST'),
-    port=int(os.getenv('REDIS_PORT')),
-    password=os.getenv('REDIS_PASSWORD'),
-    ssl=True,
-    decode_responses=True
+
+
+REDIS_URL = os.getenv("REDIS_URL")
+r = redis.from_url(REDIS_URL, ssl=True, decode_responses=True)
 )
 STATUS_EXPIRE = 900  # 15 นาที
 
