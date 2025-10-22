@@ -31,14 +31,11 @@ PORT_LON = 100.514851
 
 
 
-# --- Redis client (แก้) ---
 REDIS_URL = os.getenv("REDIS_URL")
 if not REDIS_URL:
-    raise RuntimeError("Missing REDIS_URL env var")
-
-r = redis.from_url(REDIS_URL, ssl=True, decode_responses=True)
+    raise RuntimeError("Missing REDIS_URL")
+r = redis.from_url(REDIS_URL, decode_responses=True)  # ไม่ต้อง ssl=True
 STATUS_EXPIRE = 900  # 15 นาที
-
 def get_current_time():
     return datetime.datetime.now(TIMEZONE)
 
